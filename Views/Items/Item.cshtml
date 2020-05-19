@@ -1,0 +1,189 @@
+﻿@model contact.ViewModels.ItemViewModel
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="//ajax.aspnetcdn.com/ajax/jquery.ui/1.10.3/jquery-ui.min.js"></script>
+@using System.Text.Json
+<script type="text/javascript">
+    $(document).ready(
+        function Again() {
+            var name = $('#searchh').val();
+            name = encodeURIComponent(name);
+            var color = $('#Color').val();
+            var text = $('#Text').val();
+            var status = $('#status').val();
+            $.ajax({
+                url: '@Url.Action("ListComments", "Items")?IdItem=' + name,
+                async: true,
+                cache: false,
+                success: function (data) {
+                    var string = '';
+                    $.each(data, function (k, val) {
+                        var date = new Date(Date.parse(val.time));
+                        var d = new Date(date.getFullYear(), date.getMonth(), date.getDay());
+                        d = formatDate(d);
+                        var nowdate = d + '  ' + date.getHours() + ':' + date.getMinutes();
+                        var a = "";
+                        if (status == "True") {
+                            a = '<a class="btn btn-xs" href="/Items/DeleteComment/?Id=' + val.id + '"><i class="fas fa-trash-alt"></i></a>';
+                        };
+                        string += '<div id="' + k + '" class="row">' +
+                                        '<div class="col-sm-12 col-md-12 mb-2">' +
+                                            '<div class="card shadow-sm border-0">' +
+                                                '<div class="card-header bg-dark text-light d-flex justify-content-between">' +
+                            '<b>' + val.userEmail + '</b><small class="ml-auto">' + nowdate + '</small>' + a +
+                                                '</div>' +
+                                                '<div class="card-body"'+ ' style="' + color + '">'+
+                                                    '<p class="card-text">' + val.comment + '</p>'+
+                                                '</div>' +
+                                            '</div>' +
+                                        '</div>' +
+                                    '</div>';
+                    });
+                    if ($('#results').html() != string) {
+                        $('#results').empty();
+                        $('#results').append(string);
+                    };
+                    setTimeout(Again,4000);
+                }
+            });
+        });
+    function formatDate(date) {
+
+        var dd = date.getDate();
+        if (dd < 10) dd = '0' + dd;
+
+        var mm = date.getMonth() + 1;
+        if (mm < 10) mm = '0' + mm;
+
+        var yy = date.getFullYear() % 100;
+        if (yy < 10) yy = '0' + yy;
+
+        return dd + '.' + mm + '.' + yy;
+    }
+</script>
+<script type="text/javascript">
+    function Like() {
+        var name = $('#searchh').val();
+        name = encodeURIComponent(name);
+        if ($('#like').html().includes('<i class="far fa-heart"></i>')) {
+            $.ajax({
+                url: '@Url.Action("Like", "Items")?ItemId=' + name,
+                async: true,
+                cache: false,
+                success: function (data) {
+                    $('#like').empty();
+                    $('#like').append(data + ' <i class="fas fa-heart"></i>');
+                }
+            });
+        }
+        else {
+            $.ajax({
+                url: '@Url.Action("Like", "Items")?ItemId=' + name,
+                async: true,
+                cache: false,
+                success: function (data) {
+                    $('#like').empty();
+                    $('#like').append(data + ' <i class="far fa-heart"></i>');
+                }
+            });
+        }
+        
+    }
+</script>
+@{
+    ViewData["Title"] = "View";
+}
+<input type="hidden" id="status" value="@Model.isAdmin.ToString()" />
+<div class="row">
+    <div class="col-md-5 col-md-5 col-lg-5 mb-3 mx-5 rounded shadow @if (Context.Request.Cookies["theme"] == "dark") {@:border-0" style="background:rgb(21,46,77)
+                                                                            } else {@: border 
+                                                                                    } ">
+        <div class="sticky-top mt-2 text-center">
+            <div class="mb-2">
+                @if (Model.isAdmin == true)
+                {
+                    <form class="btn-group">
+                        <button type="submit" class="btn btn-dark" asp-action="EditItem" asp-route-id="@Model.Item.Id">@Localizer["EditItem"]</button>
+                        <button type="submit" class="btn btn-dark" asp-action="CollectionsItems" asp-route-id="@Model.Item.IdCollection">@Localizer["Back"]</button>
+                    </form>
+                }
+            </div>
+            @if (Model.Item.Img != null)
+            {
+                <div class="text-center">
+                    <img style="width:100%;max-width:600px;max-height:600px;" class="mx-auto rounded shadow mb-3" src="@Model.Item.Img" />
+                </div>
+            }
+            @foreach (var fields in JsonSerializer.Deserialize<Dictionary<string, string[]>>(Model.Item.Fields))
+            {
+                if (fields.Value.Length != 0)
+                {
+                    for (int j = 0; j < fields.Value.Length; j += 2)
+                    {
+                        @if (fields.Key == "int")
+                        {
+                            <div class="row">
+                                <div class="mb-2 mx-auto">
+                                    <h4>@fields.Value.ElementAt(j)</h4>  @fields.Value.ElementAt(j + 1)
+                                </div>
+                            </div>
+                        }
+                        @if (fields.Key == "str")
+                        {
+                            <div class="row">
+                                <div class="mb-2 mx-auto">
+                                    <h4>@fields.Value.ElementAt(j)</h4>  <markdown>@fields.Value.ElementAt(j + 1)</markdown>
+                                </div>
+                            </div>
+                        }
+                        @if (fields.Key == "date")
+                        {
+                            <div class="row">
+                                <div class="mb-2 mx-auto">
+                                    <h4>@fields.Value.ElementAt(j)</h4>  @fields.Value.ElementAt(j + 1)
+                                </div>
+                            </div>
+                        }
+                        @if (fields.Key == "bool")
+                        {
+                            <div class="row">
+                                <div class="mb-2 mx-auto">
+                                    <input type="hidden" id="Bool" name="Bool" class="form-control" value="@fields.Value.ElementAt(j)">
+                                    <h4>
+                                        @fields.Value.ElementAt(j): <input disabled type="checkbox" id="Bool" name="Bool" style="height:15px;width:15px;" @if (fields.Value.ElementAt(j + 1) == "on") { @: checked
+                                                                           }>
+                                    </h4>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            }
+            <div>
+                <input type="hidden" id="searchh" name="name" value="@Model.Item.Id" />
+            </div>
+            <div id="likes">
+                <button type="button" class="btn btn-dark btn-lg mb-2" id="like" onclick="Like()" @if (!User.Identity.IsAuthenticated) { @: disabled
+                        }>
+                    @Model.Likes
+                    @if (Model.Liked == false)
+                    {<i class="far fa-heart"></i>}
+                    else
+                    {<i class="fas fa-heart"></i>}
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-md-5 col-lg-4 mb-2 ml-lg-5 ml-md-0">
+        <div>
+            @if (User.Identity.IsAuthenticated)
+            {
+                <form asp-action="CreateComment" method="post" class="mb-3">
+                    <button class="btn btn-dark btn-block" type="submit" name="IdItem" value="@Model.Item.Id">@Localizer["Add"]</button>
+                    <textarea name="Text" class="form-control @if (Context.Request.Cookies["theme"] == "dark") {@:border-0 text-light" style="background:rgb(83,129,176)
+                                                                            }" aria-label="With textarea"></textarea>
+                </form>
+            }
+        </div>
+        <div id="results"></div>
+    </div>
+</div>
