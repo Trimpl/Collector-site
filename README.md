@@ -4,6 +4,6 @@ Here you can add your own collections, edit and delete them. In collections you 
 In this project I solved next problems:
 - Authentication with Identity
 - Localization (ru/ eng)
--Dark and white themes
--Likes and comment using AJAX
--Adaptive design using Bootstrap
+- Dark and white themes
+- Likes and comment using AJAX
+- Adaptive design using Bootstrap
